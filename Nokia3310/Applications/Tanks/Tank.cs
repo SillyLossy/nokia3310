@@ -17,6 +17,7 @@ namespace Nokia3310.Applications.Tanks
                 LastShot = DateTime.Now,
                 ShootCooldown = 1000,
                 MovementSpeed = 200,
+                Heath = 1,
                 Facing = EnumHelper.Random<Direction>()
             };
         }
@@ -25,6 +26,7 @@ namespace Nokia3310.Applications.Tanks
         private DateTime LastShot { get; set; }
         private double MovementSpeed { get; set; }
         private DateTime LastMovement { get; set; }
+        private int Heath { get; set; }
         public Coordinate Location { get; set; }
         public Direction Facing { get; set; }
 
@@ -77,5 +79,12 @@ namespace Nokia3310.Applications.Tanks
 
             return null;
         }
+
+        public void Hit()
+        {
+            --Heath;
+        }
+
+        public bool Destroyed => Heath == 0;
     }
 }

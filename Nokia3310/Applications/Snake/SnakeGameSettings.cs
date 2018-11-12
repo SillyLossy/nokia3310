@@ -14,11 +14,11 @@ namespace Nokia3310.Applications.Snake
             HighScore = new List<HighScoreEntry>();
         }
 
-        public void PutScore(int score)
+        public void PutScore(string name, int score)
         {
             if (HighScore.Count < MaxScores || score <= HighScore.Select(x => x.Score).Min())
             {
-                HighScore.Add(new HighScoreEntry { Editable = true, Name = "", Score = score });
+                HighScore.Add(new HighScoreEntry { Editable = true, Name = name, Score = score });
                 HighScore = HighScore.OrderByDescending(x => x.Score).Take(MaxScores).ToList();
             }
         }

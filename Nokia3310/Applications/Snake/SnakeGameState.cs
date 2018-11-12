@@ -4,11 +4,13 @@ using System.Linq;
 using System.Text;
 using Nokia3310.Applications.Common;
 using Nokia3310.Applications.Extensions;
+using Nokia3310.Applications.Games;
+using OpenTK.Input;
 using RLNET;
 
 namespace Nokia3310.Applications.Snake
 {
-    public class SnakeGameState
+    public class SnakeGameState : AbstractGameState
     {
         private static readonly string[][] LevelPresets = {
             new[]
@@ -120,7 +122,14 @@ namespace Nokia3310.Applications.Snake
             return (level + 1) * 20 + (level / 2) * 20 + (level / 5) * 50;
         }
 
-        private static readonly int[] TickRates = { 200, 175, 150, 125, 100 };
+        private int GetTickRate(int level)
+        {
+            const int maxTickRate = 200, minTickRate = 100, decrementPerLevel = 25;
+
+            int tickRate = maxTickRate - (level* decrementPerLevel);
+
+            return tickRate > minTickRate ? tickRate : minTickRate;
+        }
 
         private const int InitialNodes = 3;
 
@@ -139,19 +148,16 @@ namespace Nokia3310.Applications.Snake
         public IEnumerable<Treat> Treats => treats;
         public IEnumerable<Coordinate> Nodes => nodes;
 
-        public StateManager StateManager { get; }
-
         private static SnakeGameSettings Settings => SettingsManager.Read<SnakeGameSettings>();
 
         public IEnumerable<HighScoreEntry> HighScore => Settings.HighScore;
 
-        public SnakeGameState()
+        public SnakeGameState() : base(GameState.Title)
         {
             nodes = new LinkedList<Coordinate>();
             treats = new List<Treat>();
             lastUpdate = DateTime.Now;
             nameBuffer = new StringBuilder(HighScoreEntry.MaxNameLength, HighScoreEntry.MaxNameLength);
-            StateManager = new StateManager(GameState.Title);
         }
 
         private void Spawn()
@@ -169,7 +175,7 @@ namespace Nokia3310.Applications.Snake
             SpawnTreat();
         }
 
-        public void Update(RLKeyPress keyPress)
+        public override void Update(KeyboardState keyboard, RLKeyPress keyPress)
         {
             if (keyPress?.Key == RLKey.Escape)
             {
@@ -202,7 +208,7 @@ namespace Nokia3310.Applications.Snake
             {
                 if (StateManager.PreviousState == GameState.GameOver)
                 {
-                    Settings.PutScore(Score);
+                    Settings.PutScore(nameBuffer.ToString(), Score);
                     StateManager.ChangeState(GameState.HighScore);
                 }
                 else
@@ -248,7 +254,7 @@ namespace Nokia3310.Applications.Snake
         {
             SetDirection(keyPress);
 
-            if (!direction.HasValue || (DateTime.Now - lastUpdate).TotalMilliseconds < TickRates.GetIndexOrLast(Level))
+            if (!direction.HasValue || (DateTime.Now - lastUpdate).TotalMilliseconds < GetTickRate(Level))
             {
                 return;
             }

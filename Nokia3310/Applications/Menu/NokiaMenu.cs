@@ -25,11 +25,11 @@ namespace Nokia3310.Applications.Menu
                 Width = ScreenWidth,
                 Height = ScreenHeight,
                 Scale = 1,
-                ResizeType = RLResizeType.ResizeScale,
+                ResizeType = RLResizeType.ResizeCells,
                 StartWindowState = RLWindowState.Normal,
-                WindowBorder = RLWindowBorder.Resizable
+                WindowBorder = RLWindowBorder.Fixed
             };
-            
+
             Console = new RLRootConsole(settings);
             menuItems = new List<NokiaApp>
             {

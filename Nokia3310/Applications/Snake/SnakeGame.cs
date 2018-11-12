@@ -1,34 +1,18 @@
-﻿using Nokia3310.Applications.Common;
+﻿using Newtonsoft.Json;
+using Nokia3310.Applications.Common;
 using Nokia3310.Applications.Extensions;
+using Nokia3310.Applications.Games;
 using RLNET;
 
 namespace Nokia3310.Applications.Snake
 {
-    public class SnakeGame : NokiaApp
+    public class SnakeGame : AbstractGame<SnakeGameState>
     {
-        private SnakeGameState gameState;
         private int blinkTick;
         private const int BlinkThreshold = FPS / 2;
 
-        public override void Run()
+        public SnakeGame(NokiaApp parent, RLRootConsole console) : base(parent, console)
         {
-            base.Run();
-            gameState = new SnakeGameState();
-        }
-
-        public SnakeGame(NokiaApp parent, RLRootConsole console) : base(parent)
-        {
-            Console = console;
-        }
-
-        public override void Update(object sender, UpdateEventArgs e)
-        {
-            gameState.Update(Console.Keyboard.GetKeyPress());
-
-            if (gameState.StateManager.CurrentState == GameState.Destroyed)
-            {
-                Destroy();
-            }
         }
 
         public override void Render(object sender, UpdateEventArgs e)
@@ -36,7 +20,7 @@ namespace Nokia3310.Applications.Snake
             blinkTick = blinkTick + 1 < BlinkThreshold * 2 ? blinkTick + 1 : 0;
             Console.Clear(' ', BackgroundColor, BackgroundColor);
 
-            switch (gameState.StateManager.CurrentState)
+            switch (State.StateManager.CurrentState)
             {
                 case GameState.Title:
                     Render_Title();
@@ -62,16 +46,16 @@ namespace Nokia3310.Applications.Snake
         {
             string line1, line2;
 
-            if (gameState.StateManager.PreviousState == GameState.GameOver)
+            if (State.StateManager.PreviousState == GameState.GameOver)
             {
                 Render_GameOver();
                 line1 = "GAME OVER!";
-                line2 = $"Score: {gameState.Score}";
+                line2 = $"Score: {State.Score}";
             }
             else
             {
-                line1 = $"Level {gameState.Level + 1}";
-                line2 = $"Goal: {gameState.GetLevelCap(gameState.Level)} points";
+                line1 = $"Level {State.Level + 1}";
+                line2 = $"Goal: {State.GetLevelCap(State.Level)} points";
             }
 
             const int boxWidth = 21, boxHeight = 11, textMargin = 3;
@@ -89,7 +73,7 @@ namespace Nokia3310.Applications.Snake
 
             int offsetY = 2, i = 0;
 
-            foreach (var item in gameState.HighScore)
+            foreach (var item in State.HighScore)
             {
                 if (item.Editable)
                 {
@@ -108,18 +92,18 @@ namespace Nokia3310.Applications.Snake
         {
             if (DisplayBlink)
             {
-                foreach (var obstacle in gameState.Obstacles)
+                foreach (var obstacle in State.Obstacles)
                 {
                     Console.SetBackColor(obstacle.X, obstacle.Y, ForegroundColor);
                 }
 
-                foreach (var node in gameState.Nodes)
+                foreach (var node in State.Nodes)
                 {
                     Console.SetColor(node.X, node.Y, ForegroundColor);
                     Console.SetChar(node.X, node.Y, Glyph.Block);
                 }
 
-                foreach (var treat in gameState.Treats)
+                foreach (var treat in State.Treats)
                 {
                     Console.SetColor(treat.Location.X, treat.Location.Y, ForegroundColor);
                     Console.SetChar(treat.Location.X, treat.Location.Y, treat.Character);
@@ -131,24 +115,7 @@ namespace Nokia3310.Applications.Snake
 
         private void Render_Title()
         {
-            string[] title =
-            {
-                "                            ",
-                " ÛÛÛÛ Û   Û  ÛÛÛ  Û  Û ÛÛÛÛ ",
-                " Û    ÛÛ  Û Û   Û Û Û  Û    ",
-                " ÛÛÛÛ Û Û Û ÛÛÛÛÛ ÛÛ   ÛÛÛÛ ",
-                "    Û Û  ÛÛ Û   Û Û Û  Û    ",
-                " ÛÛÛÛ Û   Û Û   Û Û  Û ÛÛÛÛ ",
-                "                            ",
-                "                            ",
-                "   ÛÛÛÛÛÛÛÛÛÛÛ     ÛÛÛÛÛ  * ",
-                "   Û         Û     Û        ",
-                "   Û         Û     Û        ",
-                "   Û         ÛÛÛÛÛÛÛ        ",
-                "   Û                        ",
-                "                            ",
-                "   Press any key to begin   "
-            };
+            string[] title = JsonConvert.DeserializeObject<string[]>(Resources.Levels.SnakeTitle);
 
             for (int i = 0; i < title.Length; i++)
             {
@@ -158,18 +125,18 @@ namespace Nokia3310.Applications.Snake
 
         private void Render_Running()
         {
-            foreach (var obstacle in gameState.Obstacles)
+            foreach (var obstacle in State.Obstacles)
             {
                 Console.SetBackColor(obstacle.X, obstacle.Y, ForegroundColor);
             }
 
-            foreach (var node in gameState.Nodes)
+            foreach (var node in State.Nodes)
             {
                 Console.SetColor(node.X, node.Y, ForegroundColor);
                 Console.SetChar(node.X, node.Y, Glyph.Block);
             }
 
-            foreach (var treat in gameState.Treats)
+            foreach (var treat in State.Treats)
             {
                 Console.SetColor(treat.Location.X, treat.Location.Y, ForegroundColor);
                 Console.SetChar(treat.Location.X, treat.Location.Y, treat.Character);

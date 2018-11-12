@@ -1,39 +1,20 @@
 ﻿using Nokia3310.Applications.Common;
-using OpenTK.Input;
+using Nokia3310.Applications.Games;
 using RLNET;
 
 namespace Nokia3310.Applications.Tanks
 {
-    public class TanksGame : NokiaApp
+    public class TanksGame : AbstractGame<TanksGameState>
     {
-        private TanksGameState state;
-
-        public override void Run()
+        public TanksGame(NokiaApp parent, RLRootConsole console) : base(parent, console)
         {
-            base.Run();
-            state = new TanksGameState();
         }
-
-        public TanksGame(NokiaApp parent, RLRootConsole console) : base(parent)
-        {
-            Console = console;
-        }
-
-        public override void Update(object sender, UpdateEventArgs e)
-        {
-            state.Update(Keyboard.GetState(), Console.Keyboard.GetKeyPress());
-
-            if (state.StateManager.CurrentState == GameState.Destroyed)
-            {
-                Destroy();
-            }
-        }
-
+        
         public override void Render(object sender, UpdateEventArgs e)
         {
             Console.Clear(' ', BackgroundColor, BackgroundColor);
 
-            switch (state.StateManager.CurrentState)
+            switch (State.StateManager.CurrentState)
             {
                 case GameState.Running:
                     Render_Running();
@@ -45,19 +26,19 @@ namespace Nokia3310.Applications.Tanks
 
         private void Render_Running()
         {
-            foreach (var obstacle in state.Obstacles)
+            foreach (var obstacle in State.Obstacles)
             {
                 Console.SetColor(obstacle.Location.X, obstacle.Location.Y, ForegroundColor);
                 Console.SetChar(obstacle.Location.X, obstacle.Location.Y, obstacle.Glyph);
             }
 
-            foreach (var projectile in state.Projectiles)
+            foreach (var projectile in State.Projectiles)
             {
                 Console.SetColor(projectile.Location.X, projectile.Location.Y, ForegroundColor);
                 Console.SetChar(projectile.Location.X, projectile.Location.Y, Glyph.Circle);
             }
 
-            foreach (var tank in state.Tanks)
+            foreach (var tank in State.Tanks)
             {
                 Console.SetColor(tank.Location.X, tank.Location.Y, ForegroundColor);
                 Console.SetChar(tank.Location.X, tank.Location.Y, tank.GetGlyph());

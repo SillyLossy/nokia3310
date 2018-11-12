@@ -2,12 +2,13 @@
 using System.Linq;
 using Nokia3310.Applications.Common;
 using Nokia3310.Applications.Extensions;
+using Nokia3310.Applications.Games;
 using OpenTK.Input;
 using RLNET;
 
 namespace Nokia3310.Applications.Tanks
 {
-    public class TanksGameState
+    public class TanksGameState : AbstractGameState
     {
         private readonly List<Tank> tanks;
         private readonly List<Obstacle> obstacles;
@@ -16,23 +17,20 @@ namespace Nokia3310.Applications.Tanks
 
         private Tank playerTank;
 
-        public StateManager StateManager { get; }
-
         public IEnumerable<Tank> Tanks => tanks;
         public IEnumerable<Obstacle> Obstacles => obstacles;
         public IEnumerable<Projectile> Projectiles => projectiles;
 
-        public TanksGameState()
+        public TanksGameState() : base(GameState.Running)
         {
             tanks = new List<Tank>();
             obstacles = new List<Obstacle>();
             projectiles = new List<Projectile>();
-            StateManager = new StateManager(GameState.Running);
             boundaries = new Boundaries(0, NokiaApp.ScreenWidth, 0, NokiaApp.ScreenHeight);
             Initialize();
         }
 
-        public void Update(KeyboardState keyboard, RLKeyPress keyPress)
+        public override void Update(KeyboardState keyboard, RLKeyPress keyPress)
         {
             if (keyPress?.Key == RLKey.Escape)
             {
@@ -85,7 +83,7 @@ namespace Nokia3310.Applications.Tanks
             {
                 projectile.Tick();
 
-                var obstacle = obstacles.FirstOrDefault(o => o.Location.Equals(projectile.Location));
+                var obstacle = obstacles.Find(o => o.Location.Equals(projectile.Location));
 
                 if (obstacle != null)
                 {
@@ -94,6 +92,18 @@ namespace Nokia3310.Applications.Tanks
                     if (obstacle.Destroyed)
                     {
                         obstacles.Remove(obstacle);
+                    }
+                }
+
+                var tank = tanks.Find(t => t.Location.Equals(projectile.Location));
+
+                if (tank != null && !ReferenceEquals(tank, projectile.Owner))
+                {
+                    toRemove.Add(projectile);
+                    tank.Hit();
+                    if (tank.Destroyed)
+                    {
+                        tanks.Remove(tank);
                     }
                 }
 
@@ -110,6 +120,7 @@ namespace Nokia3310.Applications.Tanks
         {
             playerTank = Tank.Player(new Coordinate(9, 10));
             tanks.Add(playerTank);
+            tanks.Add(Tank.Player(new Coordinate(0, 0)));
             obstacles.Add(Obstacle.Heavy(new Coordinate(11, 11)));
             obstacles.Add(Obstacle.Light(new Coordinate(11, 10)));
             obstacles.Add(Obstacle.Medium(new Coordinate(10, 11)));
